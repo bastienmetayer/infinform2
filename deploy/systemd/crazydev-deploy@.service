@@ -1,0 +1,9 @@
+# ~/.config/systemd/user/crazydev-deploy@.service
+[Unit]
+Description=Déploiement CrazyDev (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/crazydev/bin/deploy.sh %i
