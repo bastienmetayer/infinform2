@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main, preprod]       # après chaque fusion sur une branche déployée
+  pull_request:
+    branches: [main, preprod]       # sur chaque PR qui vise une branche déployée
+
+concurrency:                        # un nouveau push annule la CI en cours sur la même ref
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"    # même version que le Raspberry Pi
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Installation des dépendances
+        run: pip install -r requirements-dev.txt
+
+      - name: Tests unitaires
+        run: python -m pytest -v
+
+  branch-policy:
+    name: branch-policy
+    # Uniquement sur les PR qui visent main : la prod ne reçoit que ce qui est passé par la préprod
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Seule la branche preprod peut être fusionnée dans main
+        run: |
+          if [ "${{ github.head_ref }}" != "preprod" ]; then
+            echo "::error::PR vers main depuis '${{ github.head_ref }}' refusée : passer d'abord par preprod."
+            exit 1
+          fi
+          echo "PR depuis preprod : OK"

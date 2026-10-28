@@ -1,0 +1,22 @@
+# /etc/systemd/system/crazydev-api@.service
+# API FastAPI d'un environnement CrazyDev : crazydev-api@prod, crazydev-api@preprod
+[Unit]
+Description=CrazyDev API (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sabneit
+Group=sabneit
+WorkingDirectory=/home/sabneit/crazydev/%i
+# PORT=8000 (prod) ou 8001 (preprod)
+EnvironmentFile=/home/sabneit/crazydev/%i/service.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=INFINI_DB_PATH=/home/sabneit/crazydev/%i/current/infini_db.db
+ExecStart=/home/sabneit/crazydev/%i/venv/bin/uvicorn --app-dir /home/sabneit/crazydev/%i/current/backend main:app --host 127.0.0.1 --port ${PORT}
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
