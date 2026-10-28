@@ -1,0 +1,11 @@
+# ~/.config/systemd/user/crazydev-deploy@.timer
+[Unit]
+Description=Vérifie toutes les 2 min si un nouveau commit CrazyDev (%i) est à déployer
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=2min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
