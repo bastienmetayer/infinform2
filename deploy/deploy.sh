@@ -6,10 +6,10 @@
 #   preprod  preprod  https://crazydev-preprod.sabneit.fr  API 127.0.0.1:8001
 #
 # Lancé toutes les 2 min par le timer crazydev-deploy@<env>.timer. Un commit n'est
-# déployé que si toute la CI GitHub est verte (tests unitaires compris). Chaque
-# version est construite dans sa propre release (code + base), puis le lien
-# "current" bascule ; si l'API ou le site ne répondent pas, retour à la release
-# précédente.
+# déployé que si la CI GitHub est verte ET si les tests unitaires passent sur le
+# serveur, lancés par ce script juste avant la mise en ligne. Chaque version est
+# construite dans sa propre release (code + base), puis le lien "current" bascule ;
+# si l'API ou le site ne répondent pas, retour à la release précédente.
 #
 # Usage :
 #   deploy.sh <env>              déploie la branche de l'environnement si un nouveau commit est dispo
@@ -86,15 +86,29 @@ else:
 ' 2>/dev/null || echo error
 }
 
-# Dépendances Python : réinstallées seulement si requirements.txt a changé.
+# Dépendances Python (API + outils de test) : réinstallées seulement si elles ont changé.
 ensure_venv() {
-  local req="$1/backend/requirements.txt" hash
-  hash=$(sha256sum "$req" | cut -d' ' -f1)
+  local req="$1/backend/requirements-dev.txt" hash
+  hash=$(cat "$1/backend/requirements.txt" "$req" | sha256sum | cut -d' ' -f1)
   [[ -x "$VENV/bin/python" ]] || python3 -m venv "$VENV"
   if [[ "$(cat "$VENV/.req-hash" 2>/dev/null)" != "$hash" ]]; then
     log "Installation des dépendances Python"
     "$VENV/bin/pip" install --quiet --disable-pip-version-check -r "$req"
     echo "$hash" > "$VENV/.req-hash"
+  fi
+}
+
+# Tests unitaires sur le code exact de la release : un seul échec bloque le déploiement.
+run_tests() {
+  local dir="$1" short="$2"
+  log "Tests unitaires"
+  if (cd "$dir/backend" && PYTHONDONTWRITEBYTECODE=1 "$VENV/bin/python" -m pytest -q) \
+       > "$dir/tests.log" 2>&1; then
+    log "Tests OK : $(tail -n1 "$dir/tests.log")"
+  else
+    sed 's/^/    /' "$dir/tests.log" | tail -n 25 >&2
+    rm -rf "$dir"
+    die "tests en échec pour $short : déploiement bloqué, la version en ligne reste $(current_release || echo aucune)"
   fi
 }
 
@@ -162,6 +176,7 @@ cmd_deploy() {
   echo "$sha" > "$dir/REVISION"
 
   ensure_venv "$dir"
+  run_tests "$dir" "$short"
   # Base propre à cet environnement et à cette release, reconstruite depuis les JSON du commit
   "$VENV/bin/python" "$dir/backend/build_db.py" "$dir/infini_db.db" | while read -r l; do log "$l"; done
 
