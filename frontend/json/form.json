@@ -30,6 +30,7 @@
         "min": 0,
         "max": 2000,
         "target": 1600,
+        "tolerance": 100,
         "required": true
       },
       "couleur_jantes": {
@@ -84,6 +85,7 @@
         "min": 0,
         "max": 50,
         "target": 12,
+        "tolerance": 5,
         "required": true
       },
       "confirme": {
@@ -163,6 +165,7 @@
         "min": 0,
         "max": 60,
         "target": 42,
+        "tolerance": 5,
         "required": true
       },
       "couleur_facade": {
@@ -217,6 +220,7 @@
         "min": 0,
         "max": 30,
         "target": 9,
+        "tolerance": 5,
         "required": true
       },
       "confirme": {
