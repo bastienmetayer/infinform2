@@ -2,8 +2,8 @@
 # Déploiement continu de CrazyDev sur le Raspberry Pi.
 #
 # Un environnement = une branche Git + une URL + une base SQLite + une API :
-#   prod     main     https://crazydev.sabneit.fr          API 127.0.0.1:8000
-#   preprod  preprod  https://crazydev-preprod.sabneit.fr  API 127.0.0.1:8001
+#   prod     main     https://crazydev.bastienmetayer.fr          API 127.0.0.1:8000
+#   preprod  preprod  https://crazydev-preprod.bastienmetayer.fr  API 127.0.0.1:8001
 #
 # Lancé toutes les 2 min par le timer crazydev-deploy@<env>.timer. Un commit n'est
 # déployé que si la CI GitHub est verte ET si les tests unitaires passent sur le
@@ -23,8 +23,8 @@ set -Eeuo pipefail
 
 ENV_NAME="${1:-}"
 case "$ENV_NAME" in
-  prod)    BRANCH=main;    PORT=8000; HOST=crazydev.sabneit.fr ;;
-  preprod) BRANCH=preprod; PORT=8001; HOST=crazydev-preprod.sabneit.fr ;;
+  prod)    BRANCH=main;    PORT=8000; HOST=crazydev.bastienmetayer.fr ;;
+  preprod) BRANCH=preprod; PORT=8001; HOST=crazydev-preprod.bastienmetayer.fr ;;
   *) echo "Usage : $0 <prod|preprod> [--force|--ref <sha>|--rollback|--status|--skip-ci]" >&2; exit 2 ;;
 esac
 shift
